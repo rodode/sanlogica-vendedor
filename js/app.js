@@ -16,13 +16,10 @@
     }
   }
 
-  if (typeof firebase === "undefined") {
-    showInitError(
-      "O Firebase não carregou (variável global ausente). Verifique bloqueador de anúncios, rede ou se scripts de www.gstatic.com estão liberados."
-    );
-    return;
-  }
-
+  /**
+   * Leitura via REST do Realtime Database (GET …/Cliente.json), igual ao que funciona no navegador
+   * com CORS. O SDK Web às vezes fica preso em WebSocket / config do app; REST é estável no Pages.
+   */
   var cfg = window.__SANLOGICA_FIREBASE_CONFIG;
   if (!cfg || !cfg.firebase) {
     showInitError(
@@ -32,24 +29,18 @@
   }
 
   var fbCfg = cfg.firebase;
-  var cfgBlob = JSON.stringify(fbCfg);
-  if (cfgBlob.indexOf("SUBSTITUA") !== -1 || !fbCfg.apiKey || fbCfg.apiKey.length < 30) {
+  if (
+    !fbCfg.databaseURL ||
+    typeof fbCfg.databaseURL !== "string" ||
+    fbCfg.databaseURL.indexOf("firebaseio") === -1
+  ) {
     showInitError(
-      "Configure js/firebase-config.js com a apiKey e os campos do app Web do Firebase (Console → Configurações do projeto). Valores SUBSTITUA ou apiKey curta deixam a página presa em \"Carregando\"."
+      "Em firebase-config.js informe firebase.databaseURL do Realtime Database (ex.: https://PROJETO-default-rtdb.firebaseio.com)."
     );
     return;
   }
 
-  var db;
-  try {
-    if (!firebase.apps.length) {
-      firebase.initializeApp(fbCfg);
-    }
-    db = firebase.database();
-  } catch (e) {
-    showInitError("Erro ao iniciar Firebase: " + (e && e.message ? e.message : String(e)));
-    return;
-  }
+  var rtDbBaseUrl = fbCfg.databaseURL.replace(/\/+$/, "");
 
   var listEl = document.getElementById("list");
   var filterEl = document.getElementById("filter");
@@ -554,7 +545,7 @@
   }
 
   function loadClients() {
-    if (!db || !listEl) {
+    if (!rtDbBaseUrl || !listEl) {
       showInitError("Elementos da página incompletos (lista ausente). Atualize com Ctrl+F5.");
       return;
     }
@@ -578,9 +569,31 @@
       }, FETCH_MS);
     });
 
-    Promise.race([db.ref("Cliente").once("value"), timeoutPromise])
-      .then(function (snap) {
-        var val = snap.val();
+    var url = rtDbBaseUrl + "/Cliente.json";
+
+    function fetchClienteJson() {
+      return fetch(url, {
+        method: "GET",
+        cache: "no-store",
+        mode: "cors",
+        credentials: "omit",
+      }).then(function (res) {
+        if (res.status === 401 || res.status === 403) {
+          throw new Error(
+            "HTTP " +
+              res.status +
+              " — leitura negada. Ajuste as regras do nó Cliente no Realtime Database ou autorize o domínio do GitHub Pages no projeto Firebase."
+          );
+        }
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status + " " + res.statusText);
+        }
+        return res.json();
+      });
+    }
+
+    Promise.race([fetchClienteJson(), timeoutPromise])
+      .then(function (val) {
         clientRows = [];
 
         if (val && typeof val === "object") {
@@ -619,6 +632,10 @@
           msg =
             "Permissão negada ao ler /Cliente. No Firebase → Realtime Database → Regras, permita .read para este caminho (como no Gestor). Detalhe: " +
             msg;
+        }
+        if (msg.indexOf("Failed to fetch") !== -1) {
+          msg +=
+            " Possíveis causas: rede offline, bloqueador de conteúdo, ou domínio do site não está em Firebase Console → Configurações → Domínios autorizados (adicione seu usuario.github.io).";
         }
         if (loadError) {
           loadError.hidden = false;

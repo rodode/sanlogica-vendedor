@@ -1,7 +1,6 @@
 /**
- * Mesmo projeto do Gestor Sanlogica (Global.cs).
- * Se o Firebase reclamar, abra o Console → Configurações → app Web e complete
- * messagingSenderId e appId (copie o objeto inteiro para cá).
+ * Para esta página basta databaseURL do Realtime Database (igual ao Gestor).
+ * A leitura é feita por REST (GET …/Cliente.json), sem SDK Firebase no navegador.
  */
 window.__SANLOGICA_FIREBASE_CONFIG = {
   firebase: {

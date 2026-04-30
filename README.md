@@ -27,7 +27,12 @@ Opcional: **Authentication → Domínios autorizados** pode incluir `seudono.git
 
 ## 2. Preencher `js/firebase-config.js`
 
-No console: **Configurações do projeto** → **Seus apps** → app Web → copie o objeto `firebaseConfig` para `window.__SANLOGICA_FIREBASE_CONFIG.firebase`.
+O site **não usa mais o SDK JavaScript** do Firebase (evita travamento no GitHub Pages). Ele lê os dados com **`fetch`** na API REST:  
+`GET {databaseURL}/Cliente.json`
+
+O campo **obrigatório** para funcionar é **`databaseURL`** do Realtime Database (o mesmo do Gestor). Os outros campos (`apiKey`, etc.) podem permanecer para referência futura.
+
+Em **Authentication → Domínios autorizados**, mantenha o domínio do Pages (ex.: `rodode.github.io`) para o navegador conseguir falar com o banco (CORS).
 
 ## 3. Publicar no GitHub Pages
 

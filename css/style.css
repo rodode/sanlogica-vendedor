@@ -353,114 +353,13 @@ input:focus {
   padding: 1rem 1rem 0.85rem;
 }
 
-.client-card-head {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 0.65rem;
-}
-
-.client-card-head-left {
-  flex: 1;
-  min-width: 0;
+.client-card header {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
+  justify-content: space-between;
   gap: 8px;
-}
-
-.card-menu {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.card-menu-trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.55);
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.card-menu-trigger:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.card-menu-trigger:focus {
-  outline: none;
-}
-
-.card-menu-trigger:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.card-menu-dots {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  align-items: center;
-  justify-content: center;
-}
-
-.card-menu-dots span {
-  display: block;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.card-menu-dropdown {
-  display: none;
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  min-width: 148px;
-  padding: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
-  z-index: 30;
-}
-
-.card-menu.is-open .card-menu-dropdown {
-  display: block;
-}
-
-.card-menu-item {
-  display: block;
-  width: 100%;
-  margin: 0;
-  padding: 0.5rem 0.65rem;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.9rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.card-menu-item:hover {
-  background: var(--accent-dim);
-  color: var(--accent);
-}
-
-.client-card--busy {
-  opacity: 0.75;
-  pointer-events: none;
+  margin-bottom: 0.65rem;
 }
 
 .client-card h2 {

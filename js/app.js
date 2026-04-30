@@ -46,7 +46,6 @@
   var filterEl = document.getElementById("filter");
   var onlyActiveEl = document.getElementById("only-active");
   var dashboardEl = document.getElementById("dashboard");
-  var dashboardUpdatedEl = document.getElementById("dashboard-updated");
   var kpiPrimaryEl = document.getElementById("kpi-primary");
   var kpiSecondaryEl = document.getElementById("kpi-secondary");
   var insightStripEl = document.getElementById("insight-strip");
@@ -92,10 +91,11 @@
       if (!btnEl) return;
       var prev = btnEl.textContent;
       btnEl.textContent = "Copiado!";
-      btnEl.disabled = true;
+      var isBtn = btnEl.tagName === "BUTTON";
+      if (isBtn) btnEl.disabled = true;
       setTimeout(function () {
         btnEl.textContent = prev;
-        btnEl.disabled = false;
+        if (isBtn) btnEl.disabled = false;
       }, 2000);
     }
     function fail() {
@@ -290,17 +290,11 @@
   }
 
   function renderDashboard(rows) {
-    if (!kpiPrimaryEl || !kpiSecondaryEl || !insightStripEl || !dashboardEl || !dashboardUpdatedEl) {
+    if (!kpiPrimaryEl || !kpiSecondaryEl || !insightStripEl || !dashboardEl) {
       if (dashboardEl) dashboardEl.hidden = true;
       return;
     }
     var m = computeMetrics(rows);
-    dashboardUpdatedEl.textContent =
-      "Atualizado em " +
-      nowLocale() +
-      " · " +
-      rows.length.toLocaleString("pt-BR") +
-      " registro(s) na base";
 
     kpiPrimaryEl.innerHTML = "";
     kpiSecondaryEl.innerHTML = "";
@@ -455,16 +449,6 @@
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
-  function nowLocale() {
-    return new Date().toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
-
   function renderList() {
     var q = (filterEl.value || "").trim().toLowerCase();
     var only = onlyActiveEl.checked;
@@ -530,16 +514,23 @@
         a.rel = "noopener noreferrer";
         a.textContent = "Abrir link";
 
-        var btnCopy = document.createElement("button");
-        btnCopy.type = "button";
-        btnCopy.className = "btn-pay-copy";
-        btnCopy.textContent = "Copiar link";
-        btnCopy.addEventListener("click", function () {
-          copyToClipboard(String(link), btnCopy);
+        var spanCopy = document.createElement("span");
+        spanCopy.className = "pay-link";
+        spanCopy.setAttribute("role", "button");
+        spanCopy.setAttribute("tabindex", "0");
+        spanCopy.textContent = "Copiar link";
+        spanCopy.addEventListener("click", function () {
+          copyToClipboard(String(link), spanCopy);
+        });
+        spanCopy.addEventListener("keydown", function (ev) {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            copyToClipboard(String(link), spanCopy);
+          }
         });
 
         ddPay.appendChild(a);
-        ddPay.appendChild(btnCopy);
+        ddPay.appendChild(spanCopy);
         dl.appendChild(dtPay);
         dl.appendChild(ddPay);
       } else {

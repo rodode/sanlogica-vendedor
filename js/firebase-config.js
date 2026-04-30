@@ -1,6 +1,6 @@
 /**
  * Para esta página basta databaseURL do Realtime Database (igual ao Gestor).
- * A leitura é feita por REST (GET …/Cliente.json), sem SDK Firebase no navegador.
+ * Leitura por REST (GET …/Cliente.json); escrita igual ao Gestor (PATCH/PUT em …/Cliente/{chave}.json?auth=apiKey).
  */
 window.__SANLOGICA_FIREBASE_CONFIG = {
   firebase: {

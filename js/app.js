@@ -52,6 +52,102 @@
 
   var clientRows = [];
 
+  function closeAllCardMenus() {
+    document.querySelectorAll(".card-menu.is-open").forEach(function (el) {
+      el.classList.remove("is-open");
+      var t = el.querySelector(".card-menu-trigger");
+      if (t) t.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") closeAllCardMenus();
+  });
+
+  document.addEventListener("click", function (ev) {
+    if (ev.target.closest(".card-menu")) return;
+    closeAllCardMenus();
+  });
+
+  function saveClienteAtivo(row, novoAtivo, cardEl, onDone) {
+    var apiKey = fbCfg.apiKey;
+    if (!apiKey || String(apiKey).trim().length < 10) {
+      onDone(
+        new Error(
+          "Configure firebase.apiKey em firebase-config.js (mesma chave do Gestor) para alterar Ativo."
+        )
+      );
+      return;
+    }
+
+    var path =
+      rtDbBaseUrl +
+      "/Cliente/" +
+      encodeURIComponent(row.key) +
+      ".json?auth=" +
+      encodeURIComponent(apiKey);
+
+    cardEl.classList.add("client-card--busy");
+
+    function applyLocalOk() {
+      row.ativo = novoAtivo;
+      if (row.rawRecord && typeof row.rawRecord === "object") {
+        row.rawRecord.Ativo = novoAtivo;
+      }
+      closeAllCardMenus();
+      try {
+        renderDashboard(clientRows);
+      } catch (e2) {}
+      renderList();
+    }
+
+    function tryPut() {
+      var base = row.rawRecord && typeof row.rawRecord === "object" ? row.rawRecord : {};
+      var payload = JSON.parse(JSON.stringify(base));
+      payload.Ativo = novoAtivo;
+      return fetch(path, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        mode: "cors",
+        credentials: "omit",
+        cache: "no-store",
+      });
+    }
+
+    fetch(path, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ Ativo: novoAtivo }),
+      mode: "cors",
+      credentials: "omit",
+      cache: "no-store",
+    })
+      .then(function (res) {
+        if (res.ok) return res;
+        return tryPut().then(function (res2) {
+          if (!res2.ok) {
+            return res2.text().then(function (txt) {
+              throw new Error(
+                "HTTP " + res2.status + " — " + (txt || res2.statusText || "falha ao gravar")
+              );
+            });
+          }
+          return res2;
+        });
+      })
+      .then(function () {
+        applyLocalOk();
+        onDone(null);
+      })
+      .catch(function (err) {
+        onDone(err);
+      })
+      .finally(function () {
+        cardEl.classList.remove("client-card--busy");
+      });
+  }
+
   function pick(obj, a, b) {
     if (obj == null) return "";
     var v = obj[a];
@@ -478,13 +574,75 @@
       card.className = "client-card";
 
       var header = document.createElement("header");
+      header.className = "client-card-head";
+
+      var headLeft = document.createElement("div");
+      headLeft.className = "client-card-head-left";
       var h2 = document.createElement("h2");
       h2.textContent = row.nome || "(sem nome)";
       var badge = document.createElement("span");
       badge.className = "badge " + (row.ativo ? "on" : "off");
       badge.textContent = row.ativo ? "Ativo" : "Inativo";
-      header.appendChild(h2);
-      header.appendChild(badge);
+      headLeft.appendChild(h2);
+      headLeft.appendChild(badge);
+
+      var menuRoot = document.createElement("div");
+      menuRoot.className = "card-menu";
+
+      var menuBtn = document.createElement("button");
+      menuBtn.type = "button";
+      menuBtn.className = "card-menu-trigger";
+      menuBtn.setAttribute("aria-label", "Ações do cliente");
+      menuBtn.setAttribute("aria-expanded", "false");
+      menuBtn.setAttribute("aria-haspopup", "true");
+      var dots = document.createElement("span");
+      dots.className = "card-menu-dots";
+      dots.setAttribute("aria-hidden", "true");
+      for (var di = 0; di < 3; di++) {
+        var dot = document.createElement("span");
+        dots.appendChild(dot);
+      }
+      menuBtn.appendChild(dots);
+
+      var dropdown = document.createElement("div");
+      dropdown.className = "card-menu-dropdown";
+      dropdown.setAttribute("role", "menu");
+
+      var menuAtivarDesativar = document.createElement("button");
+      menuAtivarDesativar.type = "button";
+      menuAtivarDesativar.className = "card-menu-item";
+      menuAtivarDesativar.setAttribute("role", "menuitem");
+      menuAtivarDesativar.textContent = row.ativo ? "Desativar" : "Ativar";
+
+      menuBtn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var wasOpen = menuRoot.classList.contains("is-open");
+        closeAllCardMenus();
+        if (!wasOpen) {
+          menuRoot.classList.add("is-open");
+          menuBtn.setAttribute("aria-expanded", "true");
+        }
+      });
+
+      menuAtivarDesativar.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var novo = !row.ativo;
+        saveClienteAtivo(row, novo, card, function (err) {
+          if (err) {
+            window.alert(
+              "Não foi possível alterar o cadastro no Firebase.\n\n" +
+                (err.message || String(err)) +
+                "\n\nConfira as regras de escrita em /Cliente e se a autenticação REST está liberada (como no Gestor Sanlogica)."
+            );
+          }
+        });
+      });
+
+      dropdown.appendChild(menuAtivarDesativar);
+      menuRoot.appendChild(menuBtn);
+      menuRoot.appendChild(dropdown);
+      header.appendChild(headLeft);
+      header.appendChild(menuRoot);
 
       var dl = document.createElement("dl");
 
@@ -607,6 +765,7 @@
               dataUltimoAcesso: pick(raw, "DataUltimoAcesso", "dataUltimoAcesso"),
               ativo: formatBoolAtivo(pick(raw, "Ativo", "ativo")),
               linkPagamento: String(pick(raw, "LinkPagamento", "linkPagamento") || ""),
+              rawRecord: JSON.parse(JSON.stringify(raw)),
             });
           });
         }

@@ -630,8 +630,8 @@
       });
   }
 
-  filterEl.addEventListener("input", renderList);
-  onlyActiveEl.addEventListener("change", renderList);
+  if (filterEl) filterEl.addEventListener("input", renderList);
+  if (onlyActiveEl) onlyActiveEl.addEventListener("change", renderList);
 
   loadClients();
 })();

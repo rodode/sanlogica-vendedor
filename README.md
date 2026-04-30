@@ -51,7 +51,25 @@ Opcional: em `allowedAuthUids`, coloque os dois UIDs (`["uid1","uid2"]`) e mante
 
 3. **Abra o Git Bash ou um novo PowerShell** (importante depois de instalar o Git; feche e abra o terminal se já estava aberto). Confira com `git --version`.
 
-4. **Envie o projeto pela primeira vez** (troque `SEU_USUARIO` e `NOME_DO_REPO` pelo que apareceu na página do GitHub após criar o repo — lá costuma mostrar os comandos):
+4. **Envie o projeto pela primeira vez** (troque `SEU_USUARIO` e `NOME_DO_REPO` pelo que apareceu na página do GitHub após criar o repo — lá costuma mostrar os comandos).
+
+   **Neste computador o Git já foi inicializado e o primeiro commit já existe** na pasta `c:\Projetos\sanlogica-vendedor-gitpages`. Então você só precisa do `remote` e do `push` (use um terminal **novo** para o comando `git` ser reconhecido):
+
+```powershell
+cd "c:\Projetos\sanlogica-vendedor-gitpages"
+
+git remote add origin https://github.com/SEU_USUARIO/NOME_DO_REPO.git
+git push -u origin main
+```
+
+   Se aparecer erro **remote origin already exists**, use:
+
+```powershell
+git remote set-url origin https://github.com/SEU_USUARIO/NOME_DO_REPO.git
+git push -u origin main
+```
+
+   Se preferir fazer tudo do zero em outra máquina, use o fluxo completo:
 
 ```powershell
 cd "c:\Projetos\sanlogica-vendedor-gitpages"

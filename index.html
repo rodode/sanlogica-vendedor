@@ -8,30 +8,12 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div id="screen-login" class="screen">
-    <div class="card login-card">
-      <h1>Clientes Sanlogica</h1>
-      <p class="muted">Acesso restrito. Use o e-mail e a senha cadastrados no Firebase.</p>
-      <form id="form-login">
-        <label for="email">E-mail</label>
-        <input id="email" type="email" autocomplete="username" required />
-
-        <label for="password">Senha</label>
-        <input id="password" type="password" autocomplete="current-password" required />
-
-        <button type="submit" class="btn primary">Entrar</button>
-      </form>
-      <p id="login-error" class="error" hidden></p>
-    </div>
-  </div>
-
-  <div id="screen-app" class="screen" hidden>
+  <div id="screen-app" class="screen">
     <header class="topbar">
       <div>
         <h1>Clientes</h1>
-        <p class="muted small" id="user-label"></p>
+        <p class="muted small">Sanlogica — mesmos dados do Gestor</p>
       </div>
-      <button type="button" id="btn-logout" class="btn ghost">Sair</button>
     </header>
 
     <div class="toolbar">
@@ -49,7 +31,6 @@
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/app.js"></script>

@@ -2,39 +2,32 @@
 
 Página estática para o vendedor consultar no celular: nome, data de instalação (`DataCadastro`), último acesso (`DataUltimoAcesso`), ativo/inativo e link de pagamento — mesmos dados do nó `Cliente` do **Firebase Realtime Database** usado pelo Gestor Sanlogica.
 
-## 1. Configurar o Firebase (uma vez)
+## 1. Firebase — sem tela de login
 
-1. No [Console Firebase](https://console.firebase.google.com/), projeto **sanlogica-clientes** (ou o que você usar).
-2. **Authentication** → método **E-mail/senha** → ativar.  
-   - Crie **apenas** as contas que devem acessar (você e o vendedor).  
-   - Desative **cadastro** público se a opção existir no fluxo (evita qualquer pessoa criar conta).
-3. **Realtime Database** → **Regras** — o objetivo é **ninguém ler `Cliente` sem login**; o painel usa Firebase Auth.
+Esta página abre e já lista os clientes (igual à ideia do Gestor no desktop). Para funcionar, o **Realtime Database** precisa permitir **leitura do nó `Cliente` sem usuário logado** — em geral o mesmo tipo de regra que já permite o ERP ler/gravar com a chave que você usa no sistema.
 
-Exemplo **somente leitura** para você e o vendedor (substitua os UIDs em Authentication → usuário). Em **`.write`** mantenha o que o Gestor desktop já precisa hoje — muitas vezes é algo permissivo; se você copiar `.write` errado o ERP pode parar de salvar.
+**Segurança:** qualquer pessoa que descobrir o link do GitHub Pages poderá ver nome, datas, link de pagamento, etc. A “proteção” passa a ser só o URL não ser público; não há senha na página.
+
+Se as suas regras atuais já expõem `Cliente` para o app desktop, muitas vezes **não precisa mudar nada**. Se aparecer erro de permissão no navegador, em **Realtime Database → Regras** o bloco `Cliente` precisa de `.read` liberado para anônimo (exemplo mínimo — ajuste o `.write` ao que o Gestor exige):
 
 ```json
 {
   "rules": {
     "Cliente": {
-      ".read": "auth != null && (auth.uid === 'UID_VOCE_AQUI' || auth.uid === 'UID_VENDEDOR_AQUI')",
+      ".read": true,
       ".write": true
     }
   }
 }
 ```
 
-**Aviso:** `.write": true` permite gravação ampla (como em projetos legados). O ganho de segurança aqui é **`.read`** só para quem fez login na página + UIDs corretos. Quando quiser endurecer escrita, será preciso alinhar com como o desktop autentica no Firebase.
+Mescla com os outros nós que você já tiver (`Atualizacao`, telemetria, etc.); não apague regras de outros caminhos sem revisar.
 
-Se as suas regras atuais já têm outros nós (`Atualizacao`, telemetria, etc.), **não apague** — só altere o bloco `"Cliente"` ou use `".read"`/`".write"` compatíveis com o restante.
-
-4. **Authentication** → **Configurações do projeto** → **Domínios autorizados** → adicione o domínio do GitHub Pages, por exemplo:  
-   `seudono.github.io`
+Opcional: **Authentication → Domínios autorizados** pode incluir `seudono.github.io` se o console reclamar de domínio (para Database costuma ser menos crítico que para Auth).
 
 ## 2. Preencher `js/firebase-config.js`
 
-No console: **Configurações do projeto** → **Seus apps** → app Web → copie o objeto `firebaseConfig` e cole em `window.__SANLOGICA_FIREBASE_CONFIG.firebase`.
-
-Opcional: em `allowedAuthUids`, coloque os dois UIDs (`["uid1","uid2"]`) e mantenha as regras alinhadas.
+No console: **Configurações do projeto** → **Seus apps** → app Web → copie o objeto `firebaseConfig` para `window.__SANLOGICA_FIREBASE_CONFIG.firebase`.
 
 ## 3. Publicar no GitHub Pages
 
@@ -99,7 +92,7 @@ git push -u origin main
 
    (o nome do repo entra no endereço — por isso escolha um nome curto se quiser URL fácil de digitar no celular.)
 
-7. **Firebase** → Authentication → domínios autorizados → adicione exatamente: `SEU_USUARIO.github.io`
+7. **(Opcional)** Se o Firebase mostrar aviso de domínio, em **Authentication → Domínios autorizados** adicione `SEU_USUARIO.github.io`.
 
 ### 3.2 Atualizar o site depois de mudar arquivos
 
@@ -119,9 +112,9 @@ O Pages atualiza sozinho em poucos minutos.
 2. `git init`, `git add .`, `git commit`, `remote`, `push` na branch `main`.  
 3. **Settings → Pages** → branch `main`, pasta `/ (root)`.
 
-## 4. Repositório público e segredo
+## 4. Repositório público
 
-`apiKey` do Firebase em app web **não** é segredo sozinha: a proteção são **Authentication** + **Database Rules**. Mesmo assim, evite expor repositório público com dados sensíveis; prefira repo **privado** se possível.
+`apiKey` no front não substitui boas **Database Rules**. Como não há login nesta página, quem tiver o link do site e regras permissivas em `Cliente` enxerga os dados. Repo **privado** no GitHub não esconde o site publicado no Pages.
 
 ## Arquivos
 

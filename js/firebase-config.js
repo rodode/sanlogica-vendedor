@@ -1,10 +1,6 @@
 /**
- * Copie este arquivo a partir de firebase-config.example.js e preencha com os dados do
- * Console Firebase → Configurações do projeto → Seus apps → Web.
- *
- * allowedAuthUids: deixe [] para permitir qualquer usuário autenticado (desative cadastro
- * público no Firebase Auth). Ou cole os UIDs exatos de você e do vendedor e use as regras
- * do README com a mesma lista.
+ * Preencha com o firebaseConfig do Console Firebase → Seu projeto → App Web.
+ * Esta página não usa login: quem abrir a URL vê a lista se as regras do RTDB permitirem leitura.
  */
 window.__SANLOGICA_FIREBASE_CONFIG = {
   firebase: {
@@ -16,5 +12,4 @@ window.__SANLOGICA_FIREBASE_CONFIG = {
     messagingSenderId: "SUBSTITUA",
     appId: "SUBSTITUA",
   },
-  allowedAuthUids: [],
 };

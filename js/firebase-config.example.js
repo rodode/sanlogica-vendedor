@@ -1,5 +1,5 @@
 /**
- * Copie para firebase-config.js e preencha com o firebaseConfig do Console Firebase (app Web).
+ * Modelo — copie para firebase-config.js e preencha.
  */
 window.__SANLOGICA_FIREBASE_CONFIG = {
   firebase: {
@@ -11,5 +11,4 @@ window.__SANLOGICA_FIREBASE_CONFIG = {
     messagingSenderId: "SUBSTITUA",
     appId: "SUBSTITUA",
   },
-  allowedAuthUids: [],
 };

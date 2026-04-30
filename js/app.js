@@ -9,19 +9,13 @@
 
   firebase.initializeApp(cfg.firebase);
 
-  var auth = firebase.auth();
   var db = firebase.database();
 
-  var elLogin = document.getElementById("screen-login");
-  var elApp = document.getElementById("screen-app");
-  var formLogin = document.getElementById("form-login");
-  var loginError = document.getElementById("login-error");
   var loadStatus = document.getElementById("load-status");
   var loadError = document.getElementById("load-error");
   var listEl = document.getElementById("list");
   var filterEl = document.getElementById("filter");
   var onlyActiveEl = document.getElementById("only-active");
-  var userLabel = document.getElementById("user-label");
 
   var clientRows = [];
 
@@ -57,18 +51,6 @@
     if (value === true || value === "true" || value === 1) return true;
     if (value === false || value === "false" || value === 0) return false;
     return false;
-  }
-
-  function allowedUser(user) {
-    if (!user) return false;
-    var allow = cfg.allowedAuthUids;
-    if (!allow || allow.length === 0) return true;
-    return allow.indexOf(user.uid) !== -1;
-  }
-
-  function showLoginError(msg) {
-    loginError.textContent = msg || "";
-    loginError.hidden = !msg;
   }
 
   function renderList() {
@@ -177,63 +159,14 @@
         loadStatus.hidden = true;
         loadError.hidden = false;
         loadError.textContent =
-          "Erro ao ler clientes: " + (err && err.message ? err.message : String(err)) +
-          ". Verifique as regras do Realtime Database e se este domínio está autorizado no Firebase.";
+          "Erro ao ler clientes: " +
+          (err && err.message ? err.message : String(err)) +
+          ". No Firebase, as regras do nó Cliente precisam permitir leitura sem login (ex.: .read: true) ou o site não consegue listar — igual ao acesso que o Gestor já usa.";
       });
   }
-
-  function showApp(user) {
-    elLogin.hidden = true;
-    elApp.hidden = false;
-    userLabel.textContent = user.email || user.uid;
-    showLoginError("");
-    loadClients();
-  }
-
-  function showLoginScreen() {
-    elApp.hidden = true;
-    elLogin.hidden = false;
-    clientRows = [];
-    listEl.innerHTML = "";
-    loadStatus.hidden = false;
-    loadError.hidden = true;
-  }
-
-  auth.onAuthStateChanged(function (user) {
-    if (user) {
-      if (!allowedUser(user)) {
-        auth.signOut();
-        showLoginError("Esta conta não tem permissão para este painel.");
-        return;
-      }
-      showApp(user);
-    } else {
-      showLoginScreen();
-    }
-  });
-
-  formLogin.addEventListener("submit", function (e) {
-    e.preventDefault();
-    showLoginError("");
-    var email = document.getElementById("email").value.trim();
-    var password = document.getElementById("password").value;
-
-    auth
-      .signInWithEmailAndPassword(email, password)
-      .catch(function (err) {
-        var msg = "Falha no login.";
-        if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password")
-          msg = "E-mail ou senha incorretos.";
-        else if (err.code === "auth/too-many-requests") msg = "Muitas tentativas. Tente mais tarde.";
-        else if (err.message) msg = err.message;
-        showLoginError(msg);
-      });
-  });
-
-  document.getElementById("btn-logout").addEventListener("click", function () {
-    auth.signOut();
-  });
 
   filterEl.addEventListener("input", renderList);
   onlyActiveEl.addEventListener("change", renderList);
+
+  loadClients();
 })();

@@ -224,6 +224,36 @@ a.pay-link {
   word-break: break-all;
 }
 
+.pay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.btn-pay-copy {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.6);
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-pay-copy:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-pay-copy:disabled {
+  opacity: 0.9;
+  cursor: default;
+}
+
 .empty-state {
   color: var(--muted);
   text-align: center;

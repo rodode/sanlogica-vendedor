@@ -112,7 +112,13 @@ O Pages atualiza sozinho em poucos minutos.
 2. `git init`, `git add .`, `git commit`, `remote`, `push` na branch `main`.  
 3. **Settings → Pages** → branch `main`, pasta `/ (root)`.
 
-## 4. Repositório público
+## 4. Personalizar a URL do site
+
+- **Nome curto no GitHub:** a URL de projeto é `https://SEU_USUARIO.github.io/NOME_DO_REPOSITORIO/`. Quanto **mais curto** o `NOME_DO_REPOSITORIO`, mais fácil de digitar no celular (ex.: `sl-v` em vez de `sanlogica-vendedor`). Renomear o repo: **Settings → General → Repository name**.
+- **Domínio próprio:** em **Settings → Pages → Custom domain**, você pode apontar algo como `clientes.suaempresa.com.br`. Isso exige comprar/configurar DNS no seu provedor de domínio (tutorial oficial do GitHub em [Pages custom domain](https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site)). Depois adicione esse domínio em **Firebase → Authentication → Domínios autorizados** se usar recursos que validem domínio.
+- **Encurtador:** serviços tipo `bit.ly` ou redirect no seu site só criam um link curto que redireciona para o GitHub Pages.
+
+## 5. Repositório público
 
 `apiKey` no front não substitui boas **Database Rules**. Como não há login nesta página, quem tiver o link do site e regras permissivas em `Cliente` enxerga os dados. Repo **privado** no GitHub não esconde o site publicado no Pages.
 
@@ -120,8 +126,8 @@ O Pages atualiza sozinho em poucos minutos.
 
 | Arquivo | Função |
 |---------|--------|
-| `index.html` | Login + lista |
+| `index.html` | Página + lista |
 | `css/style.css` | Layout responsivo |
-| `js/app.js` | Auth + leitura de `Cliente` |
+| `js/app.js` | Leitura de `Cliente`, copiar link |
 | `js/firebase-config.js` | Config (você preenche) |
 | `js/firebase-config.example.js` | Modelo |

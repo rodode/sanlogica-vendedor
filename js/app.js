@@ -53,6 +53,45 @@
     return false;
   }
 
+  function copyToClipboard(text, btnEl) {
+    function feedback() {
+      if (!btnEl) return;
+      var prev = btnEl.textContent;
+      btnEl.textContent = "Copiado!";
+      btnEl.disabled = true;
+      setTimeout(function () {
+        btnEl.textContent = prev;
+        btnEl.disabled = false;
+      }, 2000);
+    }
+    function fail() {
+      window.prompt("Copie o link:", text);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(feedback).catch(function () {
+        legacyCopy();
+      });
+    } else {
+      legacyCopy();
+    }
+    function legacyCopy() {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        if (document.execCommand("copy")) feedback();
+        else fail();
+      } catch (e) {
+        fail();
+      }
+      document.body.removeChild(ta);
+    }
+  }
+
   function renderList() {
     var q = (filterEl.value || "").trim().toLowerCase();
     var only = onlyActiveEl.checked;
@@ -106,11 +145,30 @@
 
       var link = row.linkPagamento;
       if (link) {
-        var safe = String(link).replace(/"/g, "&quot;");
-        addRow(
-          "Pagamento",
-          '<a class="pay-link" href="' + safe + '" target="_blank" rel="noopener noreferrer">Abrir link</a>'
-        );
+        var dtPay = document.createElement("dt");
+        dtPay.textContent = "Pagamento";
+        var ddPay = document.createElement("dd");
+        ddPay.className = "pay-actions";
+
+        var a = document.createElement("a");
+        a.className = "pay-link";
+        a.href = link;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = "Abrir link";
+
+        var btnCopy = document.createElement("button");
+        btnCopy.type = "button";
+        btnCopy.className = "btn-pay-copy";
+        btnCopy.textContent = "Copiar link";
+        btnCopy.addEventListener("click", function () {
+          copyToClipboard(String(link), btnCopy);
+        });
+
+        ddPay.appendChild(a);
+        ddPay.appendChild(btnCopy);
+        dl.appendChild(dtPay);
+        dl.appendChild(ddPay);
       } else {
         addRow("Pagamento", "—");
       }

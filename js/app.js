@@ -16,6 +16,11 @@
   var listEl = document.getElementById("list");
   var filterEl = document.getElementById("filter");
   var onlyActiveEl = document.getElementById("only-active");
+  var dashboardEl = document.getElementById("dashboard");
+  var dashboardUpdatedEl = document.getElementById("dashboard-updated");
+  var kpiPrimaryEl = document.getElementById("kpi-primary");
+  var kpiSecondaryEl = document.getElementById("kpi-secondary");
+  var insightStripEl = document.getElementById("insight-strip");
 
   var clientRows = [];
 
@@ -90,6 +95,333 @@
       }
       document.body.removeChild(ta);
     }
+  }
+
+  function formatPct(p) {
+    if (p === null || p === undefined || isNaN(p)) return "—";
+    return (
+      p.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + "%"
+    );
+  }
+
+  function monthKeyFromDate(d) {
+    var mo = d.getMonth() + 1;
+    return d.getFullYear() + "-" + (mo < 10 ? "0" : "") + mo;
+  }
+
+  function computeMetrics(rows) {
+    var now = new Date();
+    var hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var d7 = new Date(hoje);
+    d7.setDate(d7.getDate() - 7);
+    var d30 = new Date(hoje);
+    d30.setDate(d30.getDate() - 30);
+
+    var total = rows.length;
+    var ativos7 = 0;
+    var ativos30 = 0;
+    rows.forEach(function (r) {
+      var u = parseDate(r.dataUltimoAcesso);
+      if (!u) return;
+      var ud = new Date(u.getFullYear(), u.getMonth(), u.getDate());
+      if (ud >= d7) ativos7++;
+      if (ud >= d30) ativos30++;
+    });
+
+    function pct(part) {
+      if (total === 0) return null;
+      return (part / total) * 100;
+    }
+
+    var byMonthKey = {};
+    rows.forEach(function (r) {
+      var d = parseDate(r.dataCadastro);
+      if (!d) return;
+      var k = monthKeyFromDate(d);
+      byMonthKey[k] = (byMonthKey[k] || 0) + 1;
+    });
+    var monthKeys = Object.keys(byMonthKey);
+    var mediaMes =
+      monthKeys.length === 0
+        ? 0
+        : monthKeys.reduce(function (s, k) {
+            return s + byMonthKey[k];
+          }, 0) / monthKeys.length;
+
+    var mesAntRef = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    var yAnt = mesAntRef.getFullYear();
+    var mAnt = mesAntRef.getMonth();
+    var totalMesAnterior = rows.filter(function (r) {
+      var d = parseDate(r.dataCadastro);
+      return d && d.getFullYear() === yAnt && d.getMonth() === mAnt;
+    }).length;
+
+    var yCur = now.getFullYear();
+    var mCur = now.getMonth();
+    var totalMesAtual = rows.filter(function (r) {
+      var d = parseDate(r.dataCadastro);
+      return d && d.getFullYear() === yCur && d.getMonth() === mCur;
+    }).length;
+
+    var ativosContrato = rows.filter(function (r) {
+      return r.ativo;
+    }).length;
+    var inativosContrato = total - ativosContrato;
+    var comLinkPagamento = rows.filter(function (r) {
+      return r.linkPagamento && String(r.linkPagamento).trim();
+    }).length;
+    var semUltimoAcesso = rows.filter(function (r) {
+      return !parseDate(r.dataUltimoAcesso);
+    }).length;
+
+    var semInstalacaoData = rows.filter(function (r) {
+      return !parseDate(r.dataCadastro);
+    }).length;
+
+    var usoParado30 = total - ativos30;
+
+    var bestK = null;
+    var bestN = 0;
+    monthKeys.forEach(function (k) {
+      if (byMonthKey[k] > bestN) {
+        bestN = byMonthKey[k];
+        bestK = k;
+      }
+    });
+    var melhorMesLabel = "—";
+    if (bestK) {
+      var p = bestK.split("-");
+      var md = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, 1);
+      melhorMesLabel = md.toLocaleString("pt-BR", { month: "long", year: "numeric" });
+    }
+
+    var diffMesVsAnt = totalMesAtual - totalMesAnterior;
+
+    return {
+      total: total,
+      ativos7: ativos7,
+      ativos30: ativos30,
+      pct7: pct(ativos7),
+      pct30: pct(ativos30),
+      mediaMes: Math.round(mediaMes),
+      totalMesAnterior: totalMesAnterior,
+      totalMesAtual: totalMesAtual,
+      mesAtualLabel: now.toLocaleString("pt-BR", { month: "long", year: "numeric" }),
+      mesAnteriorLabel: mesAntRef.toLocaleString("pt-BR", { month: "long", year: "numeric" }),
+      ativosContrato: ativosContrato,
+      inativosContrato: inativosContrato,
+      pctAtivosContrato: pct(ativosContrato),
+      comLinkPagamento: comLinkPagamento,
+      semLinkPagamento: total - comLinkPagamento,
+      semUltimoAcesso: semUltimoAcesso,
+      semInstalacaoData: semInstalacaoData,
+      usoParado30: usoParado30,
+      pctUsoParado30: pct(usoParado30),
+      melhorMesLabel: melhorMesLabel,
+      melhorMesQtd: bestN,
+      diffMesVsAnt: diffMesVsAnt,
+      mesesComInstalacao: monthKeys.length,
+    };
+  }
+
+  function elKpiCard(label, value, sub, meta, variantClass) {
+    var card = document.createElement("div");
+    card.className = "kpi-card" + (variantClass ? " " + variantClass : "");
+    var lab = document.createElement("div");
+    lab.className = "kpi-label";
+    lab.textContent = label;
+    var val = document.createElement("div");
+    val.className = "kpi-value";
+    val.textContent = value;
+    card.appendChild(lab);
+    card.appendChild(val);
+    if (sub) {
+      var s = document.createElement("div");
+      s.className = "kpi-sub";
+      s.textContent = sub;
+      card.appendChild(s);
+    }
+    if (meta) {
+      var m = document.createElement("div");
+      m.className = "kpi-meta";
+      m.textContent = meta;
+      card.appendChild(m);
+    }
+    return card;
+  }
+
+  function elChip(html) {
+    var span = document.createElement("span");
+    span.className = "insight-chip";
+    span.innerHTML = html;
+    return span;
+  }
+
+  function renderDashboard(rows) {
+    var m = computeMetrics(rows);
+    dashboardUpdatedEl.textContent =
+      "Atualizado em " +
+      nowLocale() +
+      " · " +
+      rows.length.toLocaleString("pt-BR") +
+      " registro(s) na base";
+
+    kpiPrimaryEl.innerHTML = "";
+    kpiSecondaryEl.innerHTML = "";
+    insightStripEl.innerHTML = "";
+
+    kpiPrimaryEl.appendChild(
+      elKpiCard(
+        "Ativos últimos 7 dias",
+        m.total === 0 ? "—" : m.ativos7.toLocaleString("pt-BR"),
+        m.total === 0 ? "—" : formatPct(m.pct7),
+        "Último acesso ≥ hoje − 7",
+        "kpi-card--emerald"
+      )
+    );
+    kpiPrimaryEl.appendChild(
+      elKpiCard(
+        "Ativos últimos 30 dias",
+        m.total === 0 ? "—" : m.ativos30.toLocaleString("pt-BR"),
+        m.total === 0 ? "—" : formatPct(m.pct30),
+        "Último acesso ≥ hoje − 30",
+        "kpi-card--emerald"
+      )
+    );
+    kpiPrimaryEl.appendChild(
+      elKpiCard(
+        "Total de instalações",
+        m.total.toLocaleString("pt-BR"),
+        m.total === 0 ? "—" : "100,00%",
+        "Clientes no Firebase (chaves em Cliente)",
+        ""
+      )
+    );
+    kpiPrimaryEl.appendChild(
+      elKpiCard(
+        "Média instalações / mês",
+        m.mesesComInstalacao === 0 ? "—" : m.mediaMes.toLocaleString("pt-BR"),
+        m.mesesComInstalacao === 0 ? "—" : "média nos meses com ao menos 1",
+        m.mesesComInstalacao > 0
+          ? m.mesesComInstalacao + " mês(es) com cadastro"
+          : null,
+        "kpi-card--amber"
+      )
+    );
+    kpiPrimaryEl.appendChild(
+      elKpiCard(
+        "Instalações mês anterior",
+        m.totalMesAnterior.toLocaleString("pt-BR"),
+        null,
+        capitalizeFirst(m.mesAnteriorLabel),
+        ""
+      )
+    );
+    var subMesAtual = null;
+    if (m.diffMesVsAnt !== 0) {
+      subMesAtual =
+        (m.diffMesVsAnt > 0 ? "▲ " : "▼ ") +
+        Math.abs(m.diffMesVsAnt).toLocaleString("pt-BR") +
+        " vs mês anterior";
+    } else if (m.totalMesAtual > 0 && m.totalMesAnterior > 0) {
+      subMesAtual = "igual ao mês anterior";
+    }
+    kpiPrimaryEl.appendChild(
+      elKpiCard(
+        "Instalações mês atual",
+        m.totalMesAtual.toLocaleString("pt-BR"),
+        subMesAtual,
+        capitalizeFirst(m.mesAtualLabel),
+        "kpi-card--amber"
+      )
+    );
+
+    kpiSecondaryEl.appendChild(
+      elKpiCard(
+        "Cadastro ativo",
+        m.ativosContrato.toLocaleString("pt-BR"),
+        m.total === 0 ? "—" : formatPct(m.pctAtivosContrato),
+        "Campo Ativo = verdadeiro",
+        "kpi-card--emerald"
+      )
+    );
+    kpiSecondaryEl.appendChild(
+      elKpiCard(
+        "Cadastro inativo",
+        m.inativosContrato.toLocaleString("pt-BR"),
+        m.total === 0 ? "—" : formatPct(pctPart(m.inativosContrato, m.total)),
+        "Campo Ativo = falso",
+        "kpi-card--rose"
+      )
+    );
+    kpiSecondaryEl.appendChild(
+      elKpiCard(
+        "Com link de pagamento",
+        m.comLinkPagamento.toLocaleString("pt-BR"),
+        m.total === 0 ? "—" : formatPct(pctPart(m.comLinkPagamento, m.total)),
+        "Link preenchido no cadastro",
+        ""
+      )
+    );
+    kpiSecondaryEl.appendChild(
+      elKpiCard(
+        "Sem último acesso",
+        m.semUltimoAcesso.toLocaleString("pt-BR"),
+        m.total === 0 ? "—" : formatPct(pctPart(m.semUltimoAcesso, m.total)),
+        "Data de último acesso vazia ou inválida",
+        "kpi-card--rose"
+      )
+    );
+
+    insightStripEl.appendChild(
+      elChip(
+        "Uso parado (>30d sem entrar): <strong>" +
+          m.usoParado30.toLocaleString("pt-BR") +
+          "</strong> · " +
+          formatPct(m.pctUsoParado30)
+      )
+    );
+    insightStripEl.appendChild(
+      elChip('Sem link de pagamento: <strong>' + m.semLinkPagamento.toLocaleString("pt-BR") + "</strong>')
+    );
+    insightStripEl.appendChild(
+      elChip('Sem data de instalação: <strong>' + m.semInstalacaoData.toLocaleString("pt-BR") + "</strong>')
+    );
+    if (m.melhorMesQtd > 0) {
+      insightStripEl.appendChild(
+        elChip(
+          'Pico de instalações: <strong>' +
+            m.melhorMesQtd.toLocaleString("pt-BR") +
+            "</strong> em " +
+            m.melhorMesLabel
+        )
+      );
+    }
+
+    dashboardEl.hidden = false;
+  }
+
+  function pctPart(part, total) {
+    if (!total) return null;
+    return (part / total) * 100;
+  }
+
+  function capitalizeFirst(s) {
+    if (!s) return "";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  function nowLocale() {
+    return new Date().toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 
   function renderList() {
@@ -184,6 +516,7 @@
     loadStatus.hidden = false;
     loadError.hidden = true;
     listEl.innerHTML = "";
+    dashboardEl.hidden = true;
 
     db.ref("Cliente")
       .once("value")
@@ -192,29 +525,28 @@
         var val = snap.val();
         clientRows = [];
 
-        if (!val || typeof val !== "object") {
-          renderList();
-          return;
+        if (val && typeof val === "object") {
+          Object.keys(val).forEach(function (key) {
+            var raw = val[key];
+            if (!raw || typeof raw !== "object") return;
+
+            clientRows.push({
+              key: key,
+              nome: String(pick(raw, "Nome", "nome") || ""),
+              dataCadastro: pick(raw, "DataCadastro", "dataCadastro"),
+              dataUltimoAcesso: pick(raw, "DataUltimoAcesso", "dataUltimoAcesso"),
+              ativo: formatBoolAtivo(pick(raw, "Ativo", "ativo")),
+              linkPagamento: String(pick(raw, "LinkPagamento", "linkPagamento") || ""),
+            });
+          });
         }
 
-        Object.keys(val).forEach(function (key) {
-          var raw = val[key];
-          if (!raw || typeof raw !== "object") return;
-
-          clientRows.push({
-            key: key,
-            nome: String(pick(raw, "Nome", "nome") || ""),
-            dataCadastro: pick(raw, "DataCadastro", "dataCadastro"),
-            dataUltimoAcesso: pick(raw, "DataUltimoAcesso", "dataUltimoAcesso"),
-            ativo: formatBoolAtivo(pick(raw, "Ativo", "ativo")),
-            linkPagamento: String(pick(raw, "LinkPagamento", "linkPagamento") || ""),
-          });
-        });
-
+        renderDashboard(clientRows);
         renderList();
       })
       .catch(function (err) {
         loadStatus.hidden = true;
+        dashboardEl.hidden = true;
         loadError.hidden = false;
         loadError.textContent =
           "Erro ao ler clientes: " +

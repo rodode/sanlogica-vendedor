@@ -16,6 +16,31 @@
       </div>
     </header>
 
+    <p id="load-status" class="muted">Carregando…</p>
+    <p id="load-error" class="error" hidden></p>
+
+    <section id="dashboard" class="dashboard" hidden aria-label="Resumo operacional">
+      <div class="dashboard-head">
+        <div>
+          <h2 class="dashboard-title">Painel resumo</h2>
+          <p class="dashboard-hint muted small">Indicadores no mesmo critério da tela Clientes do Gestor Sanlogica (último acesso e data de instalação).</p>
+        </div>
+        <p class="dashboard-updated muted small" id="dashboard-updated"></p>
+      </div>
+
+      <div id="kpi-primary" class="kpi-grid kpi-grid-primary"></div>
+
+      <div class="dashboard-divider" role="presentation"></div>
+
+      <h3 class="kpi-section-title">Composição da base</h3>
+      <div id="kpi-secondary" class="kpi-grid kpi-grid-secondary"></div>
+
+      <div class="insight-strip" id="insight-strip"></div>
+    </section>
+
+    <div class="list-section-head">
+      <h2 class="list-section-title">Lista de clientes</h2>
+    </div>
     <div class="toolbar">
       <input type="search" id="filter" placeholder="Buscar por nome…" autocomplete="off" />
       <label class="toggle">
@@ -23,9 +48,6 @@
         <span>Só ativos</span>
       </label>
     </div>
-
-    <p id="load-status" class="muted">Carregando…</p>
-    <p id="load-error" class="error" hidden></p>
 
     <div id="list" class="client-list"></div>
   </div>

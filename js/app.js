@@ -418,15 +418,23 @@
       )
     );
     insightStripEl.appendChild(
-      elChip('Sem link de pagamento: <strong>' + m.semLinkPagamento.toLocaleString("pt-BR") + "</strong>')
+      elChip(
+        "Sem link de pagamento: <strong>" +
+          m.semLinkPagamento.toLocaleString("pt-BR") +
+          "</strong>"
+      )
     );
     insightStripEl.appendChild(
-      elChip('Sem data de instalação: <strong>' + m.semInstalacaoData.toLocaleString("pt-BR") + "</strong>')
+      elChip(
+        "Sem data de instalação: <strong>" +
+          m.semInstalacaoData.toLocaleString("pt-BR") +
+          "</strong>"
+      )
     );
     if (m.melhorMesQtd > 0) {
       insightStripEl.appendChild(
         elChip(
-          'Pico de instalações: <strong>' +
+          "Pico de instalações: <strong>" +
             m.melhorMesQtd.toLocaleString("pt-BR") +
             "</strong> em " +
             m.melhorMesLabel

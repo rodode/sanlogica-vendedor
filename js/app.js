@@ -17,8 +17,8 @@
   }
 
   /**
-   * Leitura via REST do Realtime Database (GET …/Cliente.json), igual ao que funciona no navegador
-   * com CORS. O SDK Web às vezes fica preso em WebSocket / config do app; REST é estável no Pages.
+   * Leitura via REST do Realtime Database (GET .../Cliente.json).
+   * Sem SDK Firebase no navegador (evita travamento no GitHub Pages).
    */
   var cfg = window.__SANLOGICA_FIREBASE_CONFIG;
   if (!cfg || !cfg.firebase) {
@@ -311,7 +311,7 @@
         "Ativos últimos 7 dias",
         m.total === 0 ? "—" : m.ativos7.toLocaleString("pt-BR"),
         m.total === 0 ? "—" : formatPct(m.pct7),
-        "Último acesso ≥ hoje − 7",
+        "Último acesso nos últimos 7 dias",
         "kpi-card--emerald"
       )
     );
@@ -320,7 +320,7 @@
         "Ativos últimos 30 dias",
         m.total === 0 ? "—" : m.ativos30.toLocaleString("pt-BR"),
         m.total === 0 ? "—" : formatPct(m.pct30),
-        "Último acesso ≥ hoje − 30",
+        "Último acesso nos últimos 30 dias",
         "kpi-card--emerald"
       )
     );

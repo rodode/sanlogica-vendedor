@@ -566,6 +566,16 @@
     }
 
     filtered.sort(function (a, b) {
+      var da = parseDate(a.dataCadastro);
+      var db = parseDate(b.dataCadastro);
+      var ta = da ? da.getTime() : NaN;
+      var tb = db ? db.getTime() : NaN;
+      if (isNaN(ta) && isNaN(tb)) {
+        return a.nome.localeCompare(b.nome, "pt-BR");
+      }
+      if (isNaN(ta)) return 1;
+      if (isNaN(tb)) return -1;
+      if (ta !== tb) return ta - tb;
       return a.nome.localeCompare(b.nome, "pt-BR");
     });
 

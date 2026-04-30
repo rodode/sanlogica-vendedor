@@ -1,18 +1,56 @@
 (function () {
   "use strict";
 
-  var cfg = window.__SANLOGICA_FIREBASE_CONFIG;
-  if (!cfg || !cfg.firebase) {
-    console.error("Defina window.__SANLOGICA_FIREBASE_CONFIG em js/firebase-config.js");
+  var loadStatus = document.getElementById("load-status");
+  var loadError = document.getElementById("load-error");
+
+  function hideLoading() {
+    if (loadStatus) loadStatus.hidden = true;
+  }
+
+  function showInitError(msg) {
+    hideLoading();
+    if (loadError) {
+      loadError.hidden = false;
+      loadError.textContent = msg;
+    }
+  }
+
+  if (typeof firebase === "undefined") {
+    showInitError(
+      "O Firebase não carregou (variável global ausente). Verifique bloqueador de anúncios, rede ou se scripts de www.gstatic.com estão liberados."
+    );
     return;
   }
 
-  firebase.initializeApp(cfg.firebase);
+  var cfg = window.__SANLOGICA_FIREBASE_CONFIG;
+  if (!cfg || !cfg.firebase) {
+    showInitError(
+      "Defina window.__SANLOGICA_FIREBASE_CONFIG em js/firebase-config.js (use firebase-config.example.js como base)."
+    );
+    return;
+  }
 
-  var db = firebase.database();
+  var fbCfg = cfg.firebase;
+  var cfgBlob = JSON.stringify(fbCfg);
+  if (cfgBlob.indexOf("SUBSTITUA") !== -1 || !fbCfg.apiKey || fbCfg.apiKey.length < 30) {
+    showInitError(
+      "Configure js/firebase-config.js com a apiKey e os campos do app Web do Firebase (Console → Configurações do projeto). Valores SUBSTITUA ou apiKey curta deixam a página presa em \"Carregando\"."
+    );
+    return;
+  }
 
-  var loadStatus = document.getElementById("load-status");
-  var loadError = document.getElementById("load-error");
+  var db;
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(fbCfg);
+    }
+    db = firebase.database();
+  } catch (e) {
+    showInitError("Erro ao iniciar Firebase: " + (e && e.message ? e.message : String(e)));
+    return;
+  }
+
   var listEl = document.getElementById("list");
   var filterEl = document.getElementById("filter");
   var onlyActiveEl = document.getElementById("only-active");
@@ -261,6 +299,10 @@
   }
 
   function renderDashboard(rows) {
+    if (!kpiPrimaryEl || !kpiSecondaryEl || !insightStripEl || !dashboardEl || !dashboardUpdatedEl) {
+      if (dashboardEl) dashboardEl.hidden = true;
+      return;
+    }
     var m = computeMetrics(rows);
     dashboardUpdatedEl.textContent =
       "Atualizado em " +
@@ -512,16 +554,32 @@
   }
 
   function loadClients() {
-    loadStatus.textContent = "Carregando…";
-    loadStatus.hidden = false;
-    loadError.hidden = true;
-    listEl.innerHTML = "";
-    dashboardEl.hidden = true;
+    if (!db || !listEl) {
+      showInitError("Elementos da página incompletos (lista ausente). Atualize com Ctrl+F5.");
+      return;
+    }
 
-    db.ref("Cliente")
-      .once("value")
+    if (loadStatus) {
+      loadStatus.textContent = "Carregando…";
+      loadStatus.hidden = false;
+    }
+    if (loadError) loadError.hidden = true;
+    listEl.innerHTML = "";
+    if (dashboardEl) dashboardEl.hidden = true;
+
+    var FETCH_MS = 45000;
+    var timeoutPromise = new Promise(function (_, reject) {
+      setTimeout(function () {
+        reject(
+          new Error(
+            "Tempo esgotado ao buscar dados. Verifique internet, se o Realtime Database está ativo e se as regras permitem leitura em Cliente."
+          )
+        );
+      }, FETCH_MS);
+    });
+
+    Promise.race([db.ref("Cliente").once("value"), timeoutPromise])
       .then(function (snap) {
-        loadStatus.hidden = true;
         var val = snap.val();
         clientRows = [];
 
@@ -541,17 +599,34 @@
           });
         }
 
-        renderDashboard(clientRows);
+        try {
+          renderDashboard(clientRows);
+        } catch (e2) {
+          if (loadError) {
+            loadError.hidden = false;
+            loadError.textContent =
+              "Dados carregados, mas o painel resumo falhou: " +
+              (e2 && e2.message ? e2.message : String(e2));
+          }
+        }
         renderList();
       })
       .catch(function (err) {
-        loadStatus.hidden = true;
-        dashboardEl.hidden = true;
-        loadError.hidden = false;
-        loadError.textContent =
-          "Erro ao ler clientes: " +
-          (err && err.message ? err.message : String(err)) +
-          ". No Firebase, as regras do nó Cliente precisam permitir leitura sem login (ex.: .read: true) ou o site não consegue listar — igual ao acesso que o Gestor já usa.";
+        if (dashboardEl) dashboardEl.hidden = true;
+        var code = err && err.code ? String(err.code) : "";
+        var msg = err && err.message ? err.message : String(err);
+        if (code.indexOf("PERMISSION_DENIED") !== -1 || msg.indexOf("permission") !== -1) {
+          msg =
+            "Permissão negada ao ler /Cliente. No Firebase → Realtime Database → Regras, permita .read para este caminho (como no Gestor). Detalhe: " +
+            msg;
+        }
+        if (loadError) {
+          loadError.hidden = false;
+          loadError.textContent = "Erro ao ler clientes: " + msg;
+        }
+      })
+      .finally(function () {
+        hideLoading();
       });
   }
 

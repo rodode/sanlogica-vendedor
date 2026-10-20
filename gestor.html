@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Sanlogica — Clientes (gestor)</title>
+  <link rel="stylesheet" href="css/style.css?v=1" />
+  <link rel="stylesheet" href="css/gestor.css?v=1" />
+</head>
+<body>
+  <div id="screen-login" class="screen">
+    <div class="card login-card">
+      <h1>Clientes do gestor</h1>
+      <p class="muted">Informe o login e a senha para abrir a grade de clientes.</p>
+      <form id="form-login" autocomplete="on">
+        <label for="login">Login</label>
+        <input id="login" name="username" type="text" autocomplete="username" required />
+
+        <label for="password">Senha</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+
+        <p id="login-error" class="error" hidden></p>
+        <button class="btn primary" type="submit">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="screen-app" class="screen" hidden>
+    <header class="topbar">
+      <div>
+        <h1>Clientes</h1>
+        <p class="muted small">Grade do gestor — nome, último acesso, link de pagamento, liberar e ativar.</p>
+      </div>
+      <button id="btn-sair" class="btn ghost" type="button">Sair</button>
+    </header>
+
+    <p id="load-status" class="muted">Carregando…</p>
+    <p id="load-error" class="error" hidden></p>
+    <p id="action-status" class="save-status" hidden></p>
+
+    <div class="toolbar">
+      <input type="search" id="filter" placeholder="Buscar por nome…" autocomplete="off" />
+      <span id="row-count" class="muted small"></span>
+    </div>
+
+    <div class="grid-wrap">
+      <table class="client-grid">
+        <thead>
+          <tr>
+            <th>Nome do cliente</th>
+            <th>Último acesso</th>
+            <th>Link de pagamento</th>
+            <th>Liberar</th>
+            <th>Ativar</th>
+          </tr>
+        </thead>
+        <tbody id="grid-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="js/firebase-config.js?v=1"></script>
+  <script src="js/gestor.js?v=1"></script>
+</body>
+</html>

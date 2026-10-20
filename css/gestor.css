@@ -34,7 +34,7 @@ input[type="url"] {
 
 .client-grid {
   width: 100%;
-  min-width: 1100px;
+  min-width: 720px;
   border-collapse: collapse;
 }
 
@@ -75,35 +75,17 @@ input[type="url"] {
   padding: 0.45rem 0.6rem;
 }
 
-.row-actions {
-  display: flex;
-  gap: 8px;
+.ativo-cell {
+  text-align: center;
+  width: 72px;
 }
 
-.btn.compact {
-  padding: 0.4rem 0.7rem;
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-
-.btn.liberar {
-  background: #14532d;
-  color: #dcfce7;
-}
-
-.btn.bloqueado {
-  background: #991b1b;
-  color: #fee2e2;
-}
-
-.btn.ativar {
-  background: var(--accent);
-  color: #0f172a;
-}
-
-.btn:disabled {
-  opacity: 0.55;
-  cursor: default;
+.ativo-check {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: #22c55e;
+  cursor: pointer;
 }
 
 .nome-cell {

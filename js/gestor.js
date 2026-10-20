@@ -111,18 +111,6 @@
     return d;
   }
 
-  function formatDate(value) {
-    var d = parseDate(value);
-    if (!d) return "—";
-    return d.toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
-
   function formatBoolAtivo(value) {
     return value === true || value === "true" || value === 1;
   }
@@ -136,41 +124,6 @@
       return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
     }
     return String(value || "").trim() || "—";
-  }
-
-  function clienteLiberado(row) {
-    return row.ativo === true;
-  }
-
-  function toLocalIso(d) {
-    function pad(n, len) {
-      var s = String(n);
-      var size = len || 2;
-      while (s.length < size) s = "0" + s;
-      return s;
-    }
-    var offMin = -d.getTimezoneOffset();
-    var sign = offMin >= 0 ? "+" : "-";
-    var abs = Math.abs(offMin);
-    return (
-      d.getFullYear() +
-      "-" +
-      pad(d.getMonth() + 1) +
-      "-" +
-      pad(d.getDate()) +
-      "T" +
-      pad(d.getHours()) +
-      ":" +
-      pad(d.getMinutes()) +
-      ":" +
-      pad(d.getSeconds()) +
-      "." +
-      pad(d.getMilliseconds(), 3) +
-      sign +
-      pad(Math.floor(abs / 60)) +
-      ":" +
-      pad(abs % 60)
-    );
   }
 
   function recordPath(row) {
@@ -262,7 +215,7 @@
     if (rows.length === 0) {
       var trEmpty = document.createElement("tr");
       var tdEmpty = document.createElement("td");
-      tdEmpty.colSpan = 7;
+      tdEmpty.colSpan = 4;
       tdEmpty.className = "muted";
       tdEmpty.textContent = "Nenhum cliente neste filtro.";
       trEmpty.appendChild(tdEmpty);
@@ -281,14 +234,6 @@
       var tdDoc = document.createElement("td");
       tdDoc.className = "doc-cell";
       tdDoc.textContent = formatDocumento(row.cpfCnpj);
-
-      var tdData = document.createElement("td");
-      tdData.className = "data-cell";
-      tdData.textContent = formatDate(row.dataUltimoAcesso);
-
-      var tdCadastro = document.createElement("td");
-      tdCadastro.className = "data-cell";
-      tdCadastro.textContent = formatDate(row.dataCadastro);
 
       var tdLink = document.createElement("td");
       var input = document.createElement("input");
@@ -328,87 +273,41 @@
       });
       tdLink.appendChild(input);
 
-      var tdLiberar = document.createElement("td");
-      var btnLiberar = document.createElement("button");
-      btnLiberar.type = "button";
-      btnLiberar.className = "btn compact " + (clienteLiberado(row) ? "bloqueado" : "liberar");
-      btnLiberar.textContent = clienteLiberado(row) ? "bloqueado" : "liberar";
-      btnLiberar.addEventListener("click", function () {
-        var nome = row.nome || "este cliente";
-        if (clienteLiberado(row)) {
-          if (!window.confirm("Bloquear " + nome + "?")) return;
-          tr.classList.add("row-busy");
-          btnLiberar.disabled = true;
-          savePatch(row, { Ativo: false }, function (err) {
-            tr.classList.remove("row-busy");
-            btnLiberar.disabled = false;
-            if (err) {
-              setActionStatus("Não foi possível bloquear o cliente. " + (err.message || String(err)), true);
-              return;
-            }
-            row.ativo = false;
-            renderGrid();
-            setActionStatus("Cliente bloqueado.", false);
-          });
-          return;
-        }
-        var limite = new Date();
-        limite.setDate(limite.getDate() + 30);
-        var iso = toLocalIso(limite);
-        if (!window.confirm("Liberar " + nome + " por 30 dias?")) return;
+      var tdAtivo = document.createElement("td");
+      tdAtivo.className = "ativo-cell";
+      var check = document.createElement("input");
+      check.type = "checkbox";
+      check.className = "ativo-check";
+      check.checked = row.ativo === true;
+      check.indeterminate = false;
+      check.setAttribute("aria-label", "Ativo de " + (row.nome || "cliente"));
+      check.addEventListener("change", function () {
+        check.indeterminate = false;
+        var next = check.checked === true;
+        var prev = row.ativo === true;
+        if (next === prev) return;
         tr.classList.add("row-busy");
-        btnLiberar.disabled = true;
-        savePatch(row, { Ativo: true, DataLimiteAcesso: iso }, function (err) {
+        check.disabled = true;
+        savePatch(row, { Ativo: next }, function (err) {
           tr.classList.remove("row-busy");
-          btnLiberar.disabled = false;
+          check.disabled = false;
+          check.indeterminate = false;
           if (err) {
-            setActionStatus("Não foi possível liberar o cliente. " + (err.message || String(err)), true);
+            check.checked = prev;
+            setActionStatus("Não foi possível salvar o ativo. " + (err.message || String(err)), true);
             return;
           }
-          row.ativo = true;
-          row.dataLimiteAcesso = iso;
-          renderGrid();
-          setActionStatus("Cliente liberado até " + formatDate(iso) + ".", false);
+          row.ativo = next;
+          tr.className = next ? "row-on" : "row-off";
+          setActionStatus(next ? "Cliente ativado." : "Cliente desativado.", false);
         });
       });
-      tdLiberar.appendChild(btnLiberar);
-
-      var tdAtivar = document.createElement("td");
-      var btnAtivar = document.createElement("button");
-      btnAtivar.type = "button";
-      btnAtivar.className = "btn compact ativar";
-      if (row.ativo) {
-        btnAtivar.textContent = "Ativo";
-        btnAtivar.disabled = true;
-      } else {
-        btnAtivar.textContent = "Ativar";
-        btnAtivar.addEventListener("click", function () {
-          var nome = row.nome || "este cliente";
-          if (!window.confirm("Ativar " + nome + "?")) return;
-          tr.classList.add("row-busy");
-          btnAtivar.disabled = true;
-          savePatch(row, { Ativo: true }, function (err) {
-            tr.classList.remove("row-busy");
-            if (err) {
-              btnAtivar.disabled = false;
-              setActionStatus("Não foi possível ativar o cliente. " + (err.message || String(err)), true);
-              return;
-            }
-            row.ativo = true;
-            renderGrid();
-            setActionStatus("Cliente ativado.", false);
-          });
-        });
-      }
-      tdAtivar.appendChild(btnAtivar);
+      tdAtivo.appendChild(check);
 
       tr.appendChild(tdNome);
       tr.appendChild(tdDoc);
-      tr.appendChild(tdData);
-      tr.appendChild(tdCadastro);
       tr.appendChild(tdLink);
-      tr.appendChild(tdLiberar);
-      tr.appendChild(tdAtivar);
+      tr.appendChild(tdAtivo);
       gridBody.appendChild(tr);
     });
   }

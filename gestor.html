@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>Sanlogica — Clientes (gestor)</title>
   <link rel="stylesheet" href="css/style.css?v=1" />
-  <link rel="stylesheet" href="css/gestor.css?v=2" />
+  <link rel="stylesheet" href="css/gestor.css?v=3" />
 </head>
 <body>
   <div id="screen-login" class="screen">
@@ -31,7 +31,7 @@
     <header class="topbar">
       <div>
         <h1>Clientes</h1>
-        <p class="muted small">Grade do gestor — nome, último acesso, link de pagamento, liberar e ativar.</p>
+        <p class="muted small">Grade do gestor — nome, CNPJ, link de pagamento e ativo.</p>
       </div>
       <button id="btn-sair" class="btn ghost" type="button">Sair</button>
     </header>
@@ -51,11 +51,8 @@
           <tr>
             <th>Nome do cliente</th>
             <th>CNPJ</th>
-            <th>Último acesso</th>
-            <th>Último cadastro</th>
             <th>Link de pagamento</th>
-            <th>Liberar</th>
-            <th>Ativar</th>
+            <th>Ativo</th>
           </tr>
         </thead>
         <tbody id="grid-body"></tbody>
@@ -64,6 +61,6 @@
   </div>
 
   <script src="js/firebase-config.js?v=1"></script>
-  <script src="js/gestor.js?v=2"></script>
+  <script src="js/gestor.js?v=3"></script>
 </body>
 </html>

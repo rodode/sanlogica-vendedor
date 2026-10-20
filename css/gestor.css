@@ -34,7 +34,7 @@ input[type="url"] {
 
 .client-grid {
   width: 100%;
-  min-width: 880px;
+  min-width: 1100px;
   border-collapse: collapse;
 }
 
@@ -91,6 +91,11 @@ input[type="url"] {
   color: #dcfce7;
 }
 
+.btn.bloqueado {
+  background: #991b1b;
+  color: #fee2e2;
+}
+
 .btn.ativar {
   background: var(--accent);
   color: #0f172a;
@@ -106,6 +111,7 @@ input[type="url"] {
   min-width: 180px;
 }
 
-.data-cell {
+.data-cell,
+.doc-cell {
   white-space: nowrap;
 }

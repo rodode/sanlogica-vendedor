@@ -127,6 +127,21 @@
     return value === true || value === "true" || value === 1;
   }
 
+  function formatDocumento(value) {
+    var d = String(value || "").replace(/\D/g, "");
+    if (d.length === 14) {
+      return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+    }
+    if (d.length === 11) {
+      return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+    }
+    return String(value || "").trim() || "—";
+  }
+
+  function clienteLiberado(row) {
+    return row.ativo === true;
+  }
+
   function toLocalIso(d) {
     function pad(n, len) {
       var s = String(n);
@@ -247,7 +262,7 @@
     if (rows.length === 0) {
       var trEmpty = document.createElement("tr");
       var tdEmpty = document.createElement("td");
-      tdEmpty.colSpan = 5;
+      tdEmpty.colSpan = 7;
       tdEmpty.className = "muted";
       tdEmpty.textContent = "Nenhum cliente neste filtro.";
       trEmpty.appendChild(tdEmpty);
@@ -263,9 +278,17 @@
       tdNome.className = "nome-cell";
       tdNome.textContent = row.nome || "(sem nome)";
 
+      var tdDoc = document.createElement("td");
+      tdDoc.className = "doc-cell";
+      tdDoc.textContent = formatDocumento(row.cpfCnpj);
+
       var tdData = document.createElement("td");
       tdData.className = "data-cell";
       tdData.textContent = formatDate(row.dataUltimoAcesso);
+
+      var tdCadastro = document.createElement("td");
+      tdCadastro.className = "data-cell";
+      tdCadastro.textContent = formatDate(row.dataCadastro);
 
       var tdLink = document.createElement("td");
       var input = document.createElement("input");
@@ -308,13 +331,30 @@
       var tdLiberar = document.createElement("td");
       var btnLiberar = document.createElement("button");
       btnLiberar.type = "button";
-      btnLiberar.className = "btn compact liberar";
-      btnLiberar.textContent = "Liberar";
+      btnLiberar.className = "btn compact " + (clienteLiberado(row) ? "bloqueado" : "liberar");
+      btnLiberar.textContent = clienteLiberado(row) ? "bloqueado" : "liberar";
       btnLiberar.addEventListener("click", function () {
+        var nome = row.nome || "este cliente";
+        if (clienteLiberado(row)) {
+          if (!window.confirm("Bloquear " + nome + "?")) return;
+          tr.classList.add("row-busy");
+          btnLiberar.disabled = true;
+          savePatch(row, { Ativo: false }, function (err) {
+            tr.classList.remove("row-busy");
+            btnLiberar.disabled = false;
+            if (err) {
+              setActionStatus("Não foi possível bloquear o cliente. " + (err.message || String(err)), true);
+              return;
+            }
+            row.ativo = false;
+            renderGrid();
+            setActionStatus("Cliente bloqueado.", false);
+          });
+          return;
+        }
         var limite = new Date();
         limite.setDate(limite.getDate() + 30);
         var iso = toLocalIso(limite);
-        var nome = row.nome || "este cliente";
         if (!window.confirm("Liberar " + nome + " por 30 dias?")) return;
         tr.classList.add("row-busy");
         btnLiberar.disabled = true;
@@ -363,7 +403,9 @@
       tdAtivar.appendChild(btnAtivar);
 
       tr.appendChild(tdNome);
+      tr.appendChild(tdDoc);
       tr.appendChild(tdData);
+      tr.appendChild(tdCadastro);
       tr.appendChild(tdLink);
       tr.appendChild(tdLiberar);
       tr.appendChild(tdAtivar);
@@ -406,6 +448,7 @@
             clientRows.push({
               key: key,
               nome: String(pick(raw, "Nome", "nome") || ""),
+              cpfCnpj: String(pick(raw, "CPFCNPJ", "cpfCnpj") || key || ""),
               dataCadastro: pick(raw, "DataCadastro", "dataCadastro"),
               dataUltimoAcesso: pick(raw, "DataUltimoAcesso", "dataUltimoAcesso"),
               dataLimiteAcesso: pick(raw, "DataLimiteAcesso", "dataLimiteAcesso"),
